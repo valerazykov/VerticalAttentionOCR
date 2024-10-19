@@ -47,7 +47,8 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 import random
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
+import wandb
 from torch.nn import Conv2d, Linear, InstanceNorm2d
 from torch.nn.init import zeros_, ones_, kaiming_uniform_
 from tqdm import tqdm
@@ -444,9 +445,14 @@ class GenericTrainingManager:
             loss.backward(retain_graph=retain_graph)
 
     def train(self):
-        # init tensorboard file and output param summary file
+        # init tensorboard file / wandb and output param summary file
         if self.is_master:
-            self.writer = SummaryWriter(self.paths["results"])
+            # self.writer = SummaryWriter(self.paths["results"])
+            wandb.init(
+                project="htr_test",
+                name=self.params["wandb"]["name"],
+                config=self.params
+            )
             self.save_params()
         # init variables
         self.begin_time = time()
@@ -492,7 +498,8 @@ class GenericTrainingManager:
             # log metrics in tensorboard file
             if self.is_master:
                 for key in display_values.keys():
-                    self.writer.add_scalar('{}_{}'.format(self.params["dataset_params"]["train"]["name"], key), display_values[key], num_epoch)
+                    #self.writer.add_scalar('{}_{}'.format(self.params["dataset_params"]["train"]["name"], key), display_values[key], num_epoch)
+                    wandb.log({'{}/{}'.format(self.params["dataset_params"]["train"]["name"], key): display_values[key]}, num_epoch)
             self.latest_train_metrics = display_values
 
             # Handle curriculum learning update
@@ -508,7 +515,8 @@ class GenericTrainingManager:
                     # log valid metrics in tensorboard file
                     if self.is_master:
                         for key in eval_values.keys():
-                            self.writer.add_scalar('{}_{}'.format(valid_set_name, key), eval_values[key], num_epoch)
+                            #self.writer.add_scalar('{}_{}'.format(valid_set_name, key), eval_values[key], num_epoch)
+                            wandb.log({'{}/{}'.format(valid_set_name, key): eval_values[key]}, num_epoch)
                         if valid_set_name == self.params["training_params"]["set_name_focus_metric"] and (self.best is None or \
                                 (eval_values[focus_metric_name] < self.best and self.params["training_params"]["expected_metric_value"] == "low") or\
                                 (eval_values[focus_metric_name] > self.best and self.params["training_params"]["expected_metric_value"] == "high")):
@@ -520,7 +528,8 @@ class GenericTrainingManager:
                 self.save_model(epoch=num_epoch, name="last")
                 if interval_save_weights and num_epoch % interval_save_weights == 0:
                     self.save_model(epoch=num_epoch, name="weigths", keep_weights=True)
-                self.writer.flush()
+                #self.writer.flush()
+                wandb.finish()
 
     def evaluate(self, set_name, **kwargs):
         loader = self.dataset.valid_loaders[set_name]
@@ -745,7 +754,8 @@ class GenericTrainingManager:
         if self.is_master:
             for curr_metric in curr_metrics:
                 if curr_metric in self.dataset.train_dataset.curriculum_config:
-                    self.writer.add_scalar('curriculum_{}'.format(curr_metric), self.dataset.train_dataset.curriculum_config[curr_metric], self.latest_epoch)
+                    #self.writer.add_scalar('curriculum_{}'.format(curr_metric), self.dataset.train_dataset.curriculum_config[curr_metric], self.latest_epoch)
+                    wandb.log({'curriculum/{}'.format(curr_metric): self.dataset.train_dataset.curriculum_config[curr_metric]}, self.latest_epoch)
         update = True
 
         # Check if update condition is satified

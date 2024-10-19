@@ -150,7 +150,7 @@ if __name__ == "__main__":
         },
 
         "training_params": {
-            "output_folder": "fcn_iam_line",  # folder names for logs and weigths
+            "output_folder": f"{dataset_name}_line",  # folder names for logs and weigths
             "max_nb_epochs": 5000,  # max number of epochs for the training
             "max_training_time":  3600*(24+23),  # max training time limit (in seconds)
             "load_epoch": "best",  # ["best", "last"], to load weights from best epoch or last trained epoch
@@ -175,6 +175,9 @@ if __name__ == "__main__":
             "eval_metrics": ["loss_ctc", "cer", "wer"],  # Metrics name for evaluation on validation set during training
             "force_cpu": False,  # True for debug purposes to run on cpu only
         },
+        "wandb": {
+            "name": f"{dataset_name}_line"
+        }
     }
 
     if params["training_params"]["use_ddp"] and not params["training_params"]["force_cpu"]:

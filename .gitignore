@@ -9,6 +9,8 @@ log*.txt
 *.sl
 **/outputs/*
 **/old_outputs/*
+**/outputs_old/*
+**/wandb/*
 **/.ipynb_checkpoints/
 **/*.ipynb
 **/plot_model/*.tex
