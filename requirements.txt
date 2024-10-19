@@ -9,5 +9,6 @@ torch
 torchvision
 tqdm
 wandb
+tensorboard
 pillow
 editdistance
