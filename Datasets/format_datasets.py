@@ -39,6 +39,14 @@ import tarfile, zipfile
 import pickle
 import numpy as np
 from PIL import Image
+from pathlib import Path
+from typing import Union
+import matplotlib.pyplot as plt
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def format_IAM_line():
@@ -511,9 +519,127 @@ def format_READ2016_paragraph():
         }, f)
 
 
+def format_SK_line(
+    n_train_pages: int = 71,
+    n_val_pages: int = 10,
+    n_test_pages: int = 10,
+    source_folder: Union[Path, str] = r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\Сухово-Кобылин\Дневник_С-К\438-1-219",
+    target_folder: Union[Path, str] = "formatted/SK_lines",
+    skip_lines_with_grid: bool = True
+):
+    """
+    Format the Sukhovo-Kobylin dataset at line level
+    """
+    source_folder = Path(source_folder)
+    target_folder = Path(target_folder)
+    if os.path.isdir(target_folder):
+        shutil.rmtree(target_folder)
+    os.makedirs(target_folder)
+
+    imgs_path = source_folder / "Img"
+    txt_path = source_folder / "Human_text"
+    frames_path = source_folder / "Frames"
+
+    f = lambda s: s[:-4]
+    imgs_names = set(map(f, os.listdir(imgs_path)))
+    txt_names =set(map(f, os.listdir(txt_path)))
+    frames_names = set(map(f, os.listdir(frames_path)))
+    names = sorted(list(imgs_names & txt_names & frames_names))
+    if len(names) != (n_train_pages + n_val_pages + n_test_pages):
+        logger.warning("len(names) = %d, (n_train_pages + n_val_pages + n_test_pages) = %d",
+                       len(names), (n_train_pages + n_val_pages + n_test_pages))
+    def get_lines(
+        name: str,
+        imgs_path: Union[Path, str] = imgs_path,
+        txt_path: Union[Path, str] = txt_path,
+        frames_path: Union[Path, str] = frames_path,
+        img_format: str = "jpg",
+        n_points_in_line_frame: int = 3
+    ) -> Union[tuple[list[np.ndarray], list[str]], None]:
+        """
+        Return line images and line texts from Mestetskiy L.M. program
+        """
+        imgs_path = Path(imgs_path)
+        txt_path = Path(txt_path)
+        frames_path = Path(frames_path)
+
+        if (not (txt_path / f"{name}.txt").is_file()
+            or not (frames_path / f"{name}.txt").is_file()
+            or not (imgs_path / f"{name}.{img_format}").is_file()):
+            return None
+        
+        text_lines = []
+        with open(txt_path / f"{name}.txt", encoding="UTF-8") as txt_file:
+            for line in txt_file.readlines():
+                line = line.replace("$", "").strip()
+                text_lines.append(line)
+
+        line_imgs = []
+        with open(frames_path / f"{name}.txt", encoding="UTF-8") as frame_file:
+            lines = frame_file.readlines()
+            n_lines = int(lines[0])
+            if n_lines != len(text_lines):
+                return None
+            img = plt.imread(imgs_path / f"{name}.{img_format}")
+            for i in range(1, len(lines), n_points_in_line_frame + 1):
+                height = int(lines[i].split()[1])
+                x1, y_l = map(int, lines[i + 1].split())
+                x2, y_r = map(int, lines[i + n_points_in_line_frame].split())
+                y1 = max(min(y_l, y_r) - height // 2, 0)
+                y2 = max(y_l, y_r) + height // 2
+                line_imgs.append(img[y1 : y2, x1 : x2])
+        return line_imgs, text_lines
+    
+    train_names = names[:n_train_pages]
+    val_names = names[n_train_pages : n_train_pages + n_val_pages]
+    test_names = names[n_train_pages + n_val_pages:]
+
+    gt = {
+        "train": dict(),
+        "valid": dict(),
+        "test": dict()
+    }
+    charset = set()
+
+    for page_names, set_name in zip(
+        [train_names, val_names, test_names],
+        ["train", "valid", "test"]
+    ):
+        i = 0
+        img_fold_path = os.path.join(target_folder, set_name)
+        os.makedirs(img_fold_path, exist_ok=True)
+        for name in page_names:
+            r = get_lines(name)
+            if r is None:
+                logger.warning("Error in name: %s, set: %s", name, set_name)
+                continue
+            line_imgs, text_lines = r
+            for line_img, text in zip(line_imgs, text_lines):
+                if skip_lines_with_grid and "#" in text:
+                    logger.info("Skipping %s because '#' in name, set: %s, text: %s",
+                                name, set_name, text)
+                new_img_name = f"{set_name}_{i}.jpg"
+                new_img_path = os.path.join(img_fold_path, new_img_name)
+                try:
+                    Image.fromarray(line_img).save(new_img_path)
+                except:
+                    logger.warning("Error while saving %s, set: %s, text: %s",
+                                   name, set_name, text)
+                    continue
+                gt[set_name][new_img_name] = {"text": text, }
+                charset = charset.union(text)
+                i += 1
+
+    with open(os.path.join(target_folder, "labels.pkl"), "wb") as f:
+        pickle.dump({
+            "ground_truth": gt,
+            "charset": sorted(list(charset)),
+        }, f)
+
+
 if __name__ == "__main__":
 
-    format_IAM_line()
+    # format_IAM_line()
     # format_IAM_paragraph()
 
     # format_RIMES_line()
@@ -521,4 +647,11 @@ if __name__ == "__main__":
 
     # format_READ2016_line()
     # format_READ2016_paragraph()
+
+    format_SK_line(
+        n_train_pages=71,
+        n_val_pages=10,
+        n_test_pages=10,
+        source_folder=r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\Сухово-Кобылин\Дневник_С-К\438-1-219"
+    )
 

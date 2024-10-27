@@ -61,7 +61,7 @@ def train_and_test(rank, params):
 
 
 if __name__ == "__main__":
-    dataset_name = "IAM"  # ["RIMES", "IAM", "READ_2016"]
+    dataset_name = "SK"  # ["RIMES", "IAM", "READ_2016", "SK"]
 
     params = {
         "dataset_params": {
