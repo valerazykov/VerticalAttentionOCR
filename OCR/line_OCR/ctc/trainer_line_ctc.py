@@ -38,12 +38,15 @@ import editdistance
 import re
 import torch
 from torch.nn import CTCLoss
+from torch.cuda.amp import GradScaler
+from torch import autocast
 
 
 class TrainerLineCTC(GenericTrainingManager):
 
     def __init__(self, params):
         super(TrainerLineCTC, self).__init__(params)
+        self.scaler = GradScaler()
 
     def ctc_remove_successives_identical_ind(self, ind):
         res = []
@@ -61,12 +64,15 @@ class TrainerLineCTC(GenericTrainingManager):
 
         loss_ctc = CTCLoss(blank=self.dataset.tokens["blank"], reduction="sum")
         self.optimizer.zero_grad()
-        x = self.models["encoder"](x)
-        global_pred = self.models["decoder"](x)
 
-        loss = loss_ctc(global_pred.permute(2, 0, 1), y, x_reduced_len, y_len)
-        self.backward_loss(loss)
-        self.optimizer.step()
+        with autocast(device_type='cuda', dtype=torch.float16):
+            x = self.models["encoder"](x)
+            global_pred = self.models["decoder"](x)
+            loss = loss_ctc(global_pred.permute(2, 0, 1), y, x_reduced_len, y_len)
+        
+        self.scaler.scale(loss).backward()
+        self.scaler.step(self.optimizer)
+        self.scaler.update()
         pred = torch.argmax(global_pred, dim=1).cpu().numpy()
 
         metrics = self.compute_metrics(pred, y.cpu().numpy(), x_reduced_len, y_len, loss=loss.item(), metric_names=metric_names)
