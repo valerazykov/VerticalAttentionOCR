@@ -183,6 +183,9 @@ if __name__ == "__main__":
             "use": True,
             "project": "SK_hw_recognition",
             "name": "simple_rects"
+        },
+        "tensorboard": {
+            "use": True
         }
     }
 

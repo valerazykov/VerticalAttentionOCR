@@ -80,6 +80,7 @@ class GenericTrainingManager:
         self.best = None
         self.writer = None
         self.use_wandb = params.get("wandb", {}).get("use", False)
+        self.use_tensorboard = params.get("tensorboard", {}).get("use", False)
 
         self.init_hardware_config()
         self.init_apex_config()
@@ -454,7 +455,7 @@ class GenericTrainingManager:
                     name=self.params["wandb"]["name"],
                     config=self.params
                 )
-            else:
+            if self.use_tensorboard:
                 self.writer = SummaryWriter(self.paths["results"])
             self.save_params()
         # init variables
@@ -503,7 +504,7 @@ class GenericTrainingManager:
                 for key in display_values.keys():
                     if self.use_wandb:
                         wandb.log({'{}/{}'.format(self.params["dataset_params"]["train"]["name"], key): display_values[key]}, num_epoch)
-                    else:
+                    if self.use_tensorboard:
                         self.writer.add_scalar('{}_{}'.format(self.params["dataset_params"]["train"]["name"], key), display_values[key], num_epoch)
 
             self.latest_train_metrics = display_values
@@ -523,7 +524,7 @@ class GenericTrainingManager:
                         for key in eval_values.keys():
                             if self.use_wandb:
                                 wandb.log({'{}/{}'.format(valid_set_name, key): eval_values[key]}, num_epoch)
-                            else:
+                            if self.use_tensorboard:
                                 self.writer.add_scalar('{}_{}'.format(valid_set_name, key), eval_values[key], num_epoch)
                         if valid_set_name == self.params["training_params"]["set_name_focus_metric"] and (self.best is None or \
                                 (eval_values[focus_metric_name] < self.best and self.params["training_params"]["expected_metric_value"] == "low") or\
@@ -536,7 +537,7 @@ class GenericTrainingManager:
                 self.save_model(epoch=num_epoch, name="last")
                 if interval_save_weights and num_epoch % interval_save_weights == 0:
                     self.save_model(epoch=num_epoch, name="weigths", keep_weights=True)
-                if not self.use_wandb:
+                if self.use_tensorboard:
                     self.writer.flush()
 
     def evaluate(self, set_name, **kwargs):
@@ -764,7 +765,7 @@ class GenericTrainingManager:
                 if curr_metric in self.dataset.train_dataset.curriculum_config:
                     if self.use_wandb:
                         wandb.log({'curriculum/{}'.format(curr_metric): self.dataset.train_dataset.curriculum_config[curr_metric]}, self.latest_epoch)
-                    else:
+                    if self.use_tensorboard:
                         self.writer.add_scalar('curriculum_{}'.format(curr_metric), self.dataset.train_dataset.curriculum_config[curr_metric], self.latest_epoch)
         update = True
 
