@@ -155,7 +155,7 @@ if __name__ == "__main__":
 
         "training_params": {
             "output_folder": f"{dataset_name}_line",  # folder names for logs and weigths
-            "max_nb_epochs": 5000,  # max number of epochs for the training
+            "max_nb_epochs": 500000,  # max number of epochs for the training
             "max_training_time":  3600*(24+23),  # max training time limit (in seconds)
             "load_epoch": "best",  # ["best", "last"], to load weights from best epoch or last trained epoch
             "interval_save_weights": None,  # None: keep best and last only
