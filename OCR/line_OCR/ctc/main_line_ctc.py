@@ -41,6 +41,7 @@ from torch.optim import Adam
 from basic.generic_dataset_manager import OCRDataset
 import torch.multiprocessing as mp
 import torch
+import wandb
 
 
 def train_and_test(rank, params):
@@ -58,6 +59,9 @@ def train_and_test(rank, params):
     for dataset_name in params["dataset_params"]["datasets"].keys():
         for set_name in ["test", "valid", "train"]:
             model.predict("{}-{}".format(dataset_name, set_name), [(dataset_name, set_name), ], metrics, output=True)
+
+    if params["wandb"]["use"]:
+        wandb.finish()
 
 
 if __name__ == "__main__":

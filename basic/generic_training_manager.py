@@ -536,9 +536,7 @@ class GenericTrainingManager:
                 self.save_model(epoch=num_epoch, name="last")
                 if interval_save_weights and num_epoch % interval_save_weights == 0:
                     self.save_model(epoch=num_epoch, name="weigths", keep_weights=True)
-                if self.use_wandb:
-                    wandb.finish()
-                else:
+                if not self.use_wandb:
                     self.writer.flush()
 
     def evaluate(self, set_name, **kwargs):
