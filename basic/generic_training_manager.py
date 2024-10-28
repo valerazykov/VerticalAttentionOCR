@@ -450,7 +450,7 @@ class GenericTrainingManager:
         if self.is_master:
             if self.use_wandb:
                 wandb.init(
-                    project="htr_test",
+                    project=self.params["wandb"]["project"],
                     name=self.params["wandb"]["name"],
                     config=self.params
                 )

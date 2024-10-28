@@ -176,8 +176,9 @@ if __name__ == "__main__":
             "force_cpu": False,  # True for debug purposes to run on cpu only
         },
         "wandb": {
-            "use": False,
-            "name": f"{dataset_name}_line"
+            "use": True,
+            "project": "SK_hw_recognition",
+            "name": "simple_rects"
         }
     }
 
