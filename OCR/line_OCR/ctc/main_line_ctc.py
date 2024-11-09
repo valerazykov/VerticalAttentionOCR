@@ -75,7 +75,7 @@ def train_and_test(rank, params):
 if __name__ == "__main__":
     dataset_name = "SK"  # ["RIMES", "IAM", "READ_2016", "SK"]
 
-    transfer_learning_checkpoint_path = r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\VerticalAttentionOCR\OCR\line_OCR\ctc\outputs\IAM_line\checkpoints\best_1832.pt"
+    transfer_learning_checkpoint_path = "outputs/IAM_line/checkpoints/best_1832.pt"
 
     params = {
         "dataset_params": {
