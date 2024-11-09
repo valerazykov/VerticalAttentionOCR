@@ -241,6 +241,7 @@ class GenericTrainingManager:
                         for key in checkpoint["{}_state_dict".format(state_dict_name)].keys():
                             try:
                                 self.models[model_name].load_state_dict({key: checkpoint["{}_state_dict".format(state_dict_name)][key]}, strict=False)
+                                print("transfered weights for {}, key = {}".format(state_dict_name, key), flush=True)
                             except RuntimeError as e:
                                 print(e, flush=True)
                     # Set parameters no trainable

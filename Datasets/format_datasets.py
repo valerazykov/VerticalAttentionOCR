@@ -40,7 +40,7 @@ import pickle
 import numpy as np
 from PIL import Image
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 import matplotlib.pyplot as plt
 import logging
 
@@ -520,79 +520,63 @@ def format_READ2016_paragraph():
 
 
 def format_SK_line(
-    n_train_pages: int = 71,
-    n_val_pages: int = 10,
-    n_test_pages: int = 10,
-    source_folder: Union[Path, str] = r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\Сухово-Кобылин\Дневник_С-К\438-1-219",
+    n_train_pages: int,
+    n_val_pages: int,
+    n_test_pages: int,
+    pages_folder: Union[Path, str],
     target_folder: Union[Path, str] = "formatted/SK_lines",
     skip_lines_with_grid: bool = True
 ):
     """
     Format the Sukhovo-Kobylin dataset at line level
     """
-    source_folder = Path(source_folder)
+    pages_folder = Path(pages_folder)
     target_folder = Path(target_folder)
+    assert Path.is_dir(pages_folder)
     if os.path.isdir(target_folder):
         shutil.rmtree(target_folder)
     os.makedirs(target_folder)
 
-    imgs_path = source_folder / "Img"
-    txt_path = source_folder / "Human_text"
-    frames_path = source_folder / "Frames"
-
-    f = lambda s: s[:-4]
-    imgs_names = set(map(f, os.listdir(imgs_path)))
-    txt_names =set(map(f, os.listdir(txt_path)))
-    frames_names = set(map(f, os.listdir(frames_path)))
-    names = sorted(list(imgs_names & txt_names & frames_names))
-    if len(names) != (n_train_pages + n_val_pages + n_test_pages):
-        logger.warning("len(names) = %d, (n_train_pages + n_val_pages + n_test_pages) = %d",
-                       len(names), (n_train_pages + n_val_pages + n_test_pages))
-    def get_lines(
-        name: str,
-        imgs_path: Union[Path, str] = imgs_path,
-        txt_path: Union[Path, str] = txt_path,
-        frames_path: Union[Path, str] = frames_path,
-        img_format: str = "jpg",
-        n_points_in_line_frame: int = 3
-    ) -> Union[tuple[list[np.ndarray], list[str]], None]:
-        """
-        Return line images and line texts from Mestetskiy L.M. program
-        """
-        imgs_path = Path(imgs_path)
-        txt_path = Path(txt_path)
-        frames_path = Path(frames_path)
-
-        if (not (txt_path / f"{name}.txt").is_file()
-            or not (frames_path / f"{name}.txt").is_file()
-            or not (imgs_path / f"{name}.{img_format}").is_file()):
-            return None
-        
-        text_lines = []
-        with open(txt_path / f"{name}.txt", encoding="UTF-8") as txt_file:
-            for line in txt_file.readlines():
-                line = line.replace("$", "").strip()
-                text_lines.append(line)
-
+    def get_lines_v2(
+        page_name: str,
+        pages_path: Union[Path, str],
+        img_format: str = "jpg"
+    ) -> Optional[tuple[list[np.ndarray], list[str]]]:
+        page_path = Path(pages_path) / page_name
         line_imgs = []
-        with open(frames_path / f"{name}.txt", encoding="UTF-8") as frame_file:
-            lines = frame_file.readlines()
-            n_lines = int(lines[0])
-            if n_lines != len(text_lines):
+        text_lines = []
+
+        list_dir = sorted(os.listdir(page_path))
+
+        for file_name in list_dir:
+            point_pos = file_name.find(".")
+            file_format = file_name[point_pos + 1:]
+            file_name = file_name[:point_pos]
+            if file_format != "txt":
+                continue
+            if f"{file_name}.{img_format}" not in list_dir:
                 return None
-            img = plt.imread(imgs_path / f"{name}.{img_format}")
-            for i in range(1, len(lines), n_points_in_line_frame + 1):
-                height = int(lines[i].split()[1])
-                x1, y_l = map(int, lines[i + 1].split())
-                x2, y_r = map(int, lines[i + n_points_in_line_frame].split())
-                y1 = max(min(y_l, y_r) - height // 2, 0)
-                y2 = max(y_l, y_r) + height // 2
-                line_imgs.append(img[y1 : y2, x1 : x2])
+            with open(page_path / f"{file_name}.txt", encoding="utf-8-sig") as line_file:
+                text_line = line_file.readlines()[0]
+                text_line = text_line.replace("$", "").strip()
+                if text_line == "":
+                    return None
+                text_lines.append(text_line)
+            line_imgs.append(plt.imread(page_path / f"{file_name}.{img_format}"))
+
         return line_imgs, text_lines
     
-    train_names = names[:n_train_pages]
-    val_names = names[n_train_pages : n_train_pages + n_val_pages]
-    test_names = names[n_train_pages + n_val_pages:]
+    page_names = sorted(os.listdir(pages_folder))
+    page_names = list(filter(
+        lambda page_name: Path.is_dir(pages_folder / page_name),
+        page_names
+    ))
+    if len(page_names) != (n_train_pages + n_val_pages + n_test_pages):
+        logger.warning("len(page_names) = %d, (n_train_pages + n_val_pages + n_test_pages) = %d",
+                        len(page_names), (n_train_pages + n_val_pages + n_test_pages))
+    train_names = page_names[:n_train_pages]
+    val_names = page_names[n_train_pages : n_train_pages + n_val_pages]
+    test_names = page_names[n_train_pages + n_val_pages:]
 
     gt = {
         "train": dict(),
@@ -609,7 +593,7 @@ def format_SK_line(
         img_fold_path = os.path.join(target_folder, set_name)
         os.makedirs(img_fold_path, exist_ok=True)
         for name in page_names:
-            r = get_lines(name)
+            r = get_lines_v2(name, pages_folder)
             if r is None:
                 logger.warning("Error in name: %s, set: %s", name, set_name)
                 continue
@@ -635,6 +619,7 @@ def format_SK_line(
             "ground_truth": gt,
             "charset": sorted(list(charset)),
         }, f)
+    
 
 
 if __name__ == "__main__":
@@ -652,6 +637,6 @@ if __name__ == "__main__":
         n_train_pages=71,
         n_val_pages=10,
         n_test_pages=10,
-        source_folder=r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\Сухово-Кобылин\Дневник_С-К\438-1-219"
+        pages_folder=r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\Редактор С-К\Дневник_С-К\438-1-219\Pages"
     )
 

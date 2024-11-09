@@ -42,13 +42,21 @@ from basic.generic_dataset_manager import OCRDataset
 import torch.multiprocessing as mp
 import torch
 import wandb
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def train_and_test(rank, params):
     params["training_params"]["ddp_rank"] = rank
     model = TrainerLineCTC(params)
-    # Model trains until max_time_training or max_nb_epochs is reached
-    model.train()
+    # Model trains until max_time_training or max_nb_epochs is reached or KeyboardInterrupt is raised
+    try:
+        model.train()
+    except KeyboardInterrupt:
+        logger.info("KeyboardInterrupt")
 
     # load weights giving best CER on valid set
     model.params["training_params"]["load_epoch"] = "best"
@@ -66,6 +74,8 @@ def train_and_test(rank, params):
 
 if __name__ == "__main__":
     dataset_name = "SK"  # ["RIMES", "IAM", "READ_2016", "SK"]
+
+    transfer_learning_checkpoint_path = r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\VerticalAttentionOCR\OCR\line_OCR\ctc\outputs\IAM_line\checkpoints\best_1832.pt"
 
     params = {
         "dataset_params": {
@@ -90,7 +100,7 @@ if __name__ == "__main__":
                 "preprocessings": [
                     {
                         "type": "dpi",  # modify image resolution
-                        "source": 300,  # from 300 dpi
+                        "source": 200,  # from 300 dpi
                         "target": 150,  # to 150 dpi
                     },
                     {
@@ -148,7 +158,10 @@ if __name__ == "__main__":
                 "encoder": FCN_Encoder,
                 "decoder": Decoder,
             },
-            "transfer_learning": None,  # dict : {model_name: [state_dict_name, checkpoint_path, learnable, strict], }
+            "transfer_learning": {
+                "encoder": ["encoder", transfer_learning_checkpoint_path, True, True],
+                "decoder": ["decoder", transfer_learning_checkpoint_path, True, True],
+            },  # dict : {model_name: [state_dict_name, checkpoint_path, learnable, strict], }
             "input_channels": 3,  # 1 for grayscale images, 3 for RGB ones (or grayscale as RGB)
             "dropout": 0.5,  # dropout probability for standard dropout (half dropout probability is taken for spatial dropout)
         },
@@ -171,7 +184,7 @@ if __name__ == "__main__":
                 }
             },
             "eval_on_valid": True,  # Whether to eval and logs metrics on validation set during training or not
-            "eval_on_valid_interval": 2,  # Interval (in epochs) to evaluate during training
+            "eval_on_valid_interval": 20,  # Interval (in epochs) to evaluate during training
             "focus_metric": "cer",   # Metrics to focus on to determine best epoch
             "expected_metric_value": "low",  # ["high", "low"] What is best for the focus metric value
             "set_name_focus_metric": "{}-valid".format(dataset_name),
@@ -180,9 +193,9 @@ if __name__ == "__main__":
             "force_cpu": False,  # True for debug purposes to run on cpu only
         },
         "wandb": {
-            "use": True,
+            "use": False,
             "project": "SK_hw_recognition",
-            "name": "simple_rects"
+            "name": "v2"
         },
         "tensorboard": {
             "use": True

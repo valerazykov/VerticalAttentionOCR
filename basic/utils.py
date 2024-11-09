@@ -95,13 +95,13 @@ def nb_chars_from_list(list_gt):
 
 
 def cer_from_list_str(str_gt, str_pred):
-        len_ = 0
-        edit = 0
-        for pred, gt in zip(str_pred, str_gt):
-            edit += editdistance.eval(gt, pred)
-            len_ += len(gt)
-        cer = edit / len_
-        return cer
+    len_ = 0
+    edit = 0
+    for pred, gt in zip(str_pred, str_gt):
+        edit += editdistance.eval(gt, pred)
+        len_ += len(gt)
+    cer = edit / len_
+    return cer
 
 
 def wer_from_list_str(str_gt, str_pred):
@@ -119,11 +119,11 @@ def wer_from_list_str(str_gt, str_pred):
 
 
 def cer_from_files(file_gt, file_pred):
-        with open(file_pred, "r") as f_p:
-            str_pred = f_p.readlines()
-        with open(file_gt, "r") as f_gt:
-            str_gt = f_gt.readlines()
-        return cer_from_list_str(str_gt, str_pred)
+    with open(file_pred, "r") as f_p:
+        str_pred = f_p.readlines()
+    with open(file_gt, "r") as f_gt:
+        str_gt = f_gt.readlines()
+    return cer_from_list_str(str_gt, str_pred)
 
 
 def wer_from_files(file_gt, file_pred):
