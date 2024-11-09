@@ -634,9 +634,9 @@ if __name__ == "__main__":
     # format_READ2016_paragraph()
 
     format_SK_line(
-        n_train_pages=71,
-        n_val_pages=10,
-        n_test_pages=10,
+        n_train_pages= 78, #71
+        n_val_pages= 5, #10,
+        n_test_pages=5, #10,
         pages_folder=r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\Редактор С-К\Дневник_С-К\438-1-219\Pages"
     )
 
