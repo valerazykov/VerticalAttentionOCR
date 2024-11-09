@@ -558,7 +558,7 @@ def format_SK_line(
                 return None
             with open(page_path / f"{file_name}.txt", encoding="utf-8-sig") as line_file:
                 text_line = line_file.readlines()[0]
-                text_line = text_line.replace("$", "").strip()
+                text_line = text_line.replace("$", "").replace("\u200b", "").strip()
                 if text_line == "":
                     return None
                 text_lines.append(text_line)
