@@ -525,7 +525,8 @@ def format_SK_line(
     n_test_pages: int,
     pages_folder: Union[Path, str],
     target_folder: Union[Path, str] = "formatted/SK_lines",
-    skip_lines_with_grid: bool = True
+    skip_lines_with_grid: bool = True,
+    img_format: str = "jpg"
 ):
     """
     Format the Sukhovo-Kobylin dataset at line level
@@ -540,8 +541,8 @@ def format_SK_line(
     def get_lines_v2(
         page_name: str,
         pages_path: Union[Path, str],
-        img_format: str = "jpg"
-    ) -> Optional[tuple[list[np.ndarray], list[str]]]:
+        img_format: str = img_format
+    ) -> tuple[list[np.ndarray], list[str]]:
         page_path = Path(pages_path) / page_name
         line_imgs = []
         text_lines = []
@@ -555,12 +556,14 @@ def format_SK_line(
             if file_format != "txt":
                 continue
             if f"{file_name}.{img_format}" not in list_dir:
-                return None
+                logger.warning(f"Image for %s.txt does not exists", file_name)
+                continue
             with open(page_path / f"{file_name}.txt", encoding="utf-8-sig") as line_file:
                 text_line = line_file.readlines()[0]
                 text_line = text_line.replace("$", "").replace("\u200b", "").strip()
                 if text_line == "":
-                    return None
+                    logger.warning(f"Empty text in %s.txt", file_name)
+                    continue
                 text_lines.append(text_line)
             line_imgs.append(plt.imread(page_path / f"{file_name}.{img_format}"))
 
@@ -590,6 +593,7 @@ def format_SK_line(
         ["train", "valid", "test"]
     ):
         i = 0
+        num_strings_with_hashtag = 0
         img_fold_path = os.path.join(target_folder, set_name)
         os.makedirs(img_fold_path, exist_ok=True)
         for name in page_names:
@@ -600,8 +604,10 @@ def format_SK_line(
             line_imgs, text_lines = r
             for line_img, text in zip(line_imgs, text_lines):
                 if skip_lines_with_grid and "#" in text:
-                    logger.info("Skipping %s because '#' in name, set: %s, text: %s",
-                                name, set_name, text)
+                    logger.debug("Skipping %s because '#' in name, set: %s, text: %s",
+                                 name, set_name, text)
+                    num_strings_with_hashtag += 1
+                    continue
                 new_img_name = f"{set_name}_{i}.jpg"
                 new_img_path = os.path.join(img_fold_path, new_img_name)
                 try:
@@ -613,6 +619,8 @@ def format_SK_line(
                 gt[set_name][new_img_name] = {"text": text, }
                 charset = charset.union(text)
                 i += 1
+        logger.info("Number of string with '#' in %s: %d",
+                    set_name, num_strings_with_hashtag)
 
     with open(os.path.join(target_folder, "labels.pkl"), "wb") as f:
         pickle.dump({
@@ -639,4 +647,3 @@ if __name__ == "__main__":
         n_test_pages=5, #10,
         pages_folder=r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\Редактор С-К\Дневник_С-К\438-1-219\Pages"
     )
-
