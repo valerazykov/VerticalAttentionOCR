@@ -184,7 +184,7 @@ if __name__ == "__main__":
                 }
             },
             "eval_on_valid": True,  # Whether to eval and logs metrics on validation set during training or not
-            "eval_on_valid_interval": 20,  # Interval (in epochs) to evaluate during training
+            "eval_on_valid_interval": 2,  # Interval (in epochs) to evaluate during training
             "focus_metric": "cer",   # Metrics to focus on to determine best epoch
             "expected_metric_value": "low",  # ["high", "low"] What is best for the focus metric value
             "set_name_focus_metric": "{}-valid".format(dataset_name),
