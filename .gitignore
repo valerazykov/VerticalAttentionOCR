@@ -12,7 +12,7 @@ log*.txt
 **/outputs_old/*
 **/wandb/*
 **/.ipynb_checkpoints/
-**/*.ipynb
+**/.virtual_documents
 **/plot_model/*.tex
 **/*.pdf
 **/*.aux
