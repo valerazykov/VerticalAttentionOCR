@@ -526,7 +526,8 @@ def format_SK_line(
     pages_folder: Union[Path, str],
     target_folder: Union[Path, str] = "formatted/SK_lines",
     skip_lines_with_grid: bool = True,
-    img_format: str = "jpg"
+    img_format: str = "jpg",
+    use_bw: bool = True
 ):
     """
     Format the Sukhovo-Kobylin dataset at line level
@@ -542,30 +543,38 @@ def format_SK_line(
         page_name: str,
         pages_path: Union[Path, str],
         img_format: str = img_format
-    ) -> tuple[list[np.ndarray], list[str]]:
-        page_path = Path(pages_path) / page_name
+    ) -> Optional[tuple[list[np.ndarray], list[str]]]:
+        #page_path = Path(pages_path) / page_name
+        txt_path = Path(pages_path) / page_name
+        img_path = txt_path / "BW" if use_bw else txt_path
+        assert txt_path.is_dir()
+        assert img_path.is_dir()
         line_imgs = []
         text_lines = []
 
-        list_dir = sorted(os.listdir(page_path))
-
-        for file_name in list_dir:
+        txt_list_dir = sorted(os.listdir(txt_path))
+        img_list_dir = sorted(os.listdir(img_path))
+        for file_name in txt_list_dir:
             point_pos = file_name.find(".")
             file_format = file_name[point_pos + 1:]
             file_name = file_name[:point_pos]
             if file_format != "txt":
                 continue
-            if f"{file_name}.{img_format}" not in list_dir:
+            img_full_name = f"{file_name}bw.{img_format}" if use_bw else f"{file_name}.{img_format}"
+            if img_full_name not in img_list_dir:
                 logger.warning(f"Image for %s.txt does not exists", file_name)
-                continue
-            with open(page_path / f"{file_name}.txt", encoding="utf-8-sig") as line_file:
+                return None
+            with open(txt_path / f"{file_name}.txt", encoding="utf-8-sig") as line_file:
                 text_line = line_file.readlines()[0]
                 text_line = text_line.replace("$", "").replace("\u200b", "").strip()
                 if text_line == "":
                     logger.warning(f"Empty text in %s.txt", file_name)
-                    continue
+                    return None
+                if text_line == "Экспертная расшифровка отсутствует":
+                    logger.warning(f"Экспертная расшифровка отсутствует в %s.txt", file_name)
+                    return None
                 text_lines.append(text_line)
-            line_imgs.append(plt.imread(page_path / f"{file_name}.{img_format}"))
+            line_imgs.append(plt.imread(img_path / img_full_name))
 
         return line_imgs, text_lines
     
@@ -627,6 +636,10 @@ def format_SK_line(
             "ground_truth": gt,
             "charset": sorted(list(charset)),
         }, f)
+
+    logger.info("Train names: %s", str(train_names))
+    logger.info("Val names: %s", str(val_names))
+    logger.info("Test names: %s", str(test_names))
     
 
 
@@ -642,8 +655,8 @@ if __name__ == "__main__":
     # format_READ2016_paragraph()
 
     format_SK_line(
-        n_train_pages= 78, #71
-        n_val_pages= 5, #10,
-        n_test_pages=5, #10,
-        pages_folder=r"C:\Users\valer\Desktop\mmp_courses\scientific_work\тексты\Редактор С-К\Дневник_С-К\438-1-219\Pages"
+        n_train_pages= 82, #71
+        n_val_pages=4, #10,
+        n_test_pages=6, #10,
+        pages_folder="raw/SK/Pages"
     )
