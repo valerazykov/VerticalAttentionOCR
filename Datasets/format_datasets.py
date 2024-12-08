@@ -574,7 +574,11 @@ def format_SK_line(
                     logger.warning(f"Экспертная расшифровка отсутствует в %s.txt", file_name)
                     return None
                 text_lines.append(text_line)
-            line_imgs.append(plt.imread(img_path / img_full_name))
+            img = plt.imread(img_path / img_full_name)
+            if 1 in img.shape[:2]:
+                logger.warning(f"1 in img.shape[:2] for %s", img_full_name)
+                continue
+            line_imgs.append(img)
 
         return line_imgs, text_lines
     
