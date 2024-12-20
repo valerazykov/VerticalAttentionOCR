@@ -662,5 +662,6 @@ if __name__ == "__main__":
         n_train_pages= 82, #71
         n_val_pages=4, #10,
         n_test_pages=6, #10,
-        pages_folder="raw/SK/Pages"
+        pages_folder="raw/SK/Pages",
+        use_bw=True # используем бинарзацию
     )
