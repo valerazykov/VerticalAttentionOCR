@@ -76,7 +76,7 @@ def train_and_test(rank, params):
 
 if __name__ == "__main__":
     dataset_name = "SK"  # ["RIMES", "IAM", "READ_2016", "SK"]
-    n_runs = 5  # сколько нейросейтей обучить
+    n_runs = 3  # сколько нейросейтей обучить
 
     for run_num in range(1, n_runs + 1):
         logger.info(
@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
             "training_params": {
                 "output_folder": output_folder,  # folder names for logs and weigths
-                "max_nb_epochs": 1500, # 500000,  # max number of epochs for the training
+                "max_nb_epochs": 3000, # 500000,  # max number of epochs for the training
                 "max_training_time":  3600*(24+23),  # max training time limit (in seconds)
                 "load_epoch": "best",  # ["best", "last"], to load weights from best epoch or last trained epoch
                 "interval_save_weights": None,  # None: keep best and last only
