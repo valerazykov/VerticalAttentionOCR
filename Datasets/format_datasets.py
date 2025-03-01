@@ -40,7 +40,7 @@ import pickle
 import numpy as np
 from PIL import Image
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, Optional, List
 import matplotlib.pyplot as plt
 import logging
 
@@ -520,24 +520,39 @@ def format_READ2016_paragraph():
 
 
 def format_SK_line(
-    n_train_pages: int,
-    n_val_pages: int,
-    n_test_pages: int,
+    train_names: List[str],
+    val_names: List[str],
+    test_names: List[str],
     pages_folder: Union[Path, str],
     target_folder: Union[Path, str] = "formatted/SK_lines",
     skip_lines_with_grid: bool = True,
     img_format: str = "jpg",
-    use_bw: bool = True
+    use_bw: bool = False
 ):
     """
     Format the Sukhovo-Kobylin dataset at line level
     """
+    assert len(set(train_names).intersection(val_names)) == 0
+    assert len(set(train_names).intersection(test_names)) == 0
+    assert len(set(val_names).intersection(test_names)) == 0
+
     pages_folder = Path(pages_folder)
     target_folder = Path(target_folder)
     assert Path.is_dir(pages_folder)
     if os.path.isdir(target_folder):
         shutil.rmtree(target_folder)
     os.makedirs(target_folder)
+
+    page_names = sorted(os.listdir(pages_folder))
+    page_names = list(filter(
+        lambda page_name: Path.is_dir(pages_folder / page_name),
+        page_names
+    ))
+
+    pages_in_params_set = set(train_names).union(set(val_names)).union(set(test_names))
+    if set(page_names) != pages_in_params_set:
+        unused = set(page_names).difference(pages_in_params_set)
+        logger.warning("Unused pages: %s", str(unused))
 
     def get_lines_v2(
         page_name: str,
@@ -573,26 +588,14 @@ def format_SK_line(
                 if text_line == "Экспертная расшифровка отсутствует":
                     logger.warning(f"Экспертная расшифровка отсутствует в %s.txt", file_name)
                     return None
-                text_lines.append(text_line)
             img = plt.imread(img_path / img_full_name)
-            if 1 in img.shape[:2]:
-                logger.warning(f"1 in img.shape[:2] for %s", img_full_name)
+            if img.shape[0] < 10 or img.shape[1] < 10:
+                logger.warning(f"img.shape[0] < 10 or img.shape[1] < 10 for %s (shape: %s)", img_full_name, str(img.shape))
                 continue
             line_imgs.append(img)
+            text_lines.append(text_line)
 
         return line_imgs, text_lines
-    
-    page_names = sorted(os.listdir(pages_folder))
-    page_names = list(filter(
-        lambda page_name: Path.is_dir(pages_folder / page_name),
-        page_names
-    ))
-    if len(page_names) != (n_train_pages + n_val_pages + n_test_pages):
-        logger.warning("len(page_names) = %d, (n_train_pages + n_val_pages + n_test_pages) = %d",
-                        len(page_names), (n_train_pages + n_val_pages + n_test_pages))
-    train_names = page_names[:n_train_pages]
-    val_names = page_names[n_train_pages : n_train_pages + n_val_pages]
-    test_names = page_names[n_train_pages + n_val_pages:]
 
     gt = {
         "train": dict(),
@@ -658,10 +661,13 @@ if __name__ == "__main__":
     # format_READ2016_line()
     # format_READ2016_paragraph()
 
+    train_names = ['11', '15', '17', '17об', '18', '18об', '19', '19об', '20', '20об', '21', '21об', '22', '22об', '23', '23об', '24', '24об', '25', '25об', '26', '26об', '27', '27об', '28', '28об', '29', '29об', '2об', '30', '30об', '31', '31об', '32', '32об', '33', '33об', '34', '34об', '35', '35об', '36', '38', '38об', '39', '39об', '40', '40об', '41', '41об', '42', '42об', '43', '43об', '44', '45об', '46', '46об', '47', '47об', '48', '48об', '49', '49об', '50', '50об', '51', '51об', '52', '52об', '53', '53об', '54', '54об', '55', '55об', '56', '56об', '57', '57об', '58', '88об']
+    val_names = ['58об', '59', '59об', '60', '60об']
+    test_names = ['61', '75', '75об', '7об', '95']
+
     format_SK_line(
-        n_train_pages= 82, #71
-        n_val_pages=4, #10,
-        n_test_pages=6, #10,
-        pages_folder="raw/SK/Pages",
-        use_bw=True # используем бинарзацию
+        train_names=train_names,
+        val_names=val_names,
+        test_names=test_names,
+        pages_folder="raw/SK/Pages"
     )
