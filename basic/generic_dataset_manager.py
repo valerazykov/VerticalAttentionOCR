@@ -39,6 +39,7 @@ from torchvision.transforms.functional import adjust_brightness, adjust_contrast
 from torchvision.transforms import RandomPerspective
 from basic.transforms import SignFlipping, DPIAdjusting, Dilation, Erosion, ElasticDistortion, RandomTransform
 from basic.utils import LM_str_to_ind
+from basic.random_seed_utils import get_generator, seed_worker
 import os
 import numpy as np
 import pickle
@@ -136,11 +137,13 @@ class DatasetManager:
                 self.valid_samplers[custom_name] = None
 
     def load_dataloaders(self):
+        g = get_generator(self.params["random_seed"])
         self.train_loader = DataLoader(self.train_dataset, batch_size=self.params["batch_size"],
                                        shuffle=True if not self.train_sampler else False,
                                        sampler=self.train_sampler,
                                        num_workers=self.params["num_gpu"], pin_memory=True, drop_last=False,
-                                       collate_fn=self.my_collate_function)
+                                       collate_fn=self.my_collate_function,
+                                       worker_init_fn=seed_worker, generator=g)
 
         for key in self.valid_datasets.keys():
             self.valid_loaders[key] = DataLoader(self.valid_datasets[key], batch_size=self.params["batch_size"],

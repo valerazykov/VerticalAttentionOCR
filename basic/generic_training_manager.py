@@ -225,11 +225,11 @@ class GenericTrainingManager:
             for model_name in self.models.keys():
                 self.models[model_name].apply(self.weights_init)
             # Handle transfer learning instructions
-            if self.params["model_params"]["transfer_learning"]:
+            if self.params["model_params"]["use_transfer_learning"]:
                 # Iterates over models
                 for model_name in self.params["model_params"]["transfer_learning"].keys():
                     state_dict_name, path, learnable, strict = self.params["model_params"]["transfer_learning"][model_name]
-                    # Loading pretrained weights file
+                    # Loading pretrained weights filez
                     checkpoint = torch.load(path)
                     try:
                         # Load pretrained weights for model
