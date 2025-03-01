@@ -194,7 +194,7 @@ if __name__ == "__main__":
                 "use_ddp": False,  # Use DistributedDataParallel
                 "use_apex": False,  # Enable mix-precision with apex package
                 "nb_gpu": torch.cuda.device_count(),
-                "batch_size": 128 if torch.cuda.get_device_name() == 'NVIDIA A100-SXM4-80GB' else 16,  # mini-batch size per GPU
+                "batch_size": 128 if torch.cuda.get_device_name() in ('NVIDIA A100-SXM4-80GB', 'NVIDIA H100 80GB HBM3') else 16,  # mini-batch size per GPU
                 "optimizer": {
                     "class": Adam,
                     "args": {
