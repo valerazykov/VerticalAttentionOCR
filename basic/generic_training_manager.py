@@ -187,7 +187,7 @@ class GenericTrainingManager:
                 # Continue training
                 if self.params["training_params"]["load_epoch"] in filename:
                     checkpoint_path = os.path.join(self.paths["checkpoints"], filename)
-                    checkpoint = torch.load(checkpoint_path)
+                    checkpoint = torch.load(checkpoint_path, weights_only=False)
                     self.load_save_info(checkpoint)
                     self.latest_epoch = checkpoint["epoch"]
                     self.best = checkpoint["best"]
@@ -230,7 +230,7 @@ class GenericTrainingManager:
                 for model_name in self.params["model_params"]["transfer_learning"].keys():
                     state_dict_name, path, learnable, strict = self.params["model_params"]["transfer_learning"][model_name]
                     # Loading pretrained weights filez
-                    checkpoint = torch.load(path)
+                    checkpoint = torch.load(path, weights_only=False)
                     try:
                         # Load pretrained weights for model
                         self.models[model_name].load_state_dict(checkpoint["{}_state_dict".format(state_dict_name)], strict=strict)
@@ -686,7 +686,7 @@ class GenericTrainingManager:
         for filename in os.listdir(self.paths["checkpoints"]):
             if load_mode in filename:
                 checkpoint_path = os.path.join(self.paths["checkpoints"], filename)
-                checkpoint = torch.load(checkpoint_path)
+                checkpoint = torch.load(checkpoint_path, weights_only=False)
                 for key in kwargs.keys():
                     checkpoint[key] = kwargs[key]
                 torch.save(checkpoint, checkpoint_path)
