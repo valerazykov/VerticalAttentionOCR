@@ -81,6 +81,14 @@ def edit_wer_from_list(truth, pred):
     return edit
 
 
+def edit_wer_from_str(truth: str, pred: str):
+    gt = format_string_for_wer(truth)
+    pred = format_string_for_wer(pred)
+    gt = gt.split(" ")
+    pred = pred.split(" ")
+    return editdistance.eval(gt, pred)
+
+
 def nb_words_from_list(list_gt):
     len_ = 0
     for gt in list_gt:
@@ -88,6 +96,12 @@ def nb_words_from_list(list_gt):
         gt = gt.split(" ")
         len_ += len(gt)
     return len_
+
+
+def nb_words_from_str(gt: str):
+    gt = format_string_for_wer(gt)
+    gt = gt.split(" ")
+    return len(gt)
 
 
 def nb_chars_from_list(list_gt):

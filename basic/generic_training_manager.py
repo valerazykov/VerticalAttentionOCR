@@ -569,7 +569,7 @@ class GenericTrainingManager:
                 t.set_postfix(values=str(display_values))
         return display_values
 
-    def predict(self, custom_name, sets_list, metrics_name, output=False):
+    def predict(self, custom_name, sets_list, metrics_name, output=False, print_preds=False):
         metrics_name = metrics_name.copy()
         self.dataset.generate_test_loader(custom_name, sets_list)
         loader = self.dataset.test_loaders[custom_name]
@@ -582,15 +582,17 @@ class GenericTrainingManager:
             pred_time_metric = True
         # initialize epoch metrics
         metrics = self.init_metrics(metrics_name)
-        t = tqdm(loader)
-        t.set_description("Prediction")
+        t = loader
+        if not print_preds:
+            t = tqdm(loader)
+            t.set_description("Prediction")
         begin_time = time()
         with torch.no_grad():
             for ind_batch, batch_data in enumerate(t):
                 # iterates over batch data
                 self.latest_batch = ind_batch + 1
                 # eval batch data and compute metrics
-                batch_metrics = self.evaluate_batch(batch_data, metrics_name)
+                batch_metrics = self.evaluate_batch(batch_data, metrics_name, print_preds=print_preds)
                 batch_metrics["names"] = batch_data["names"]
                 batch_metrics["ids"] = batch_data["ids"]
                 # merge batch metrics if Distributed Data Parallel is used
@@ -599,7 +601,8 @@ class GenericTrainingManager:
                 # add batch metrics to epoch metrics
                 metrics = self.update_metrics(metrics, batch_metrics)
                 display_values = self.get_display_values(metrics, metrics_name, ind_batch)
-                t.set_postfix(values=str(display_values))
+                if not print_preds:
+                    t.set_postfix(values=str(display_values))
         pred_time = time() - begin_time
         # add time metric values if requested
         if pred_time_metric:

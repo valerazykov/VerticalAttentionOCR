@@ -68,7 +68,13 @@ def test(rank, params):
     metrics = ["cer", "wer", "time", "worst_cer"]
     for dataset_name in params["dataset_params"]["datasets"].keys():
         for set_name in ["test", "valid", "train"]:
-            model.predict("{}-{}".format(dataset_name, set_name), [(dataset_name, set_name), ], metrics, output=True)
+            model.predict(
+                "{}-{}".format(dataset_name, set_name),
+                [(dataset_name, set_name), ],
+                metrics,
+                output=True,
+                print_preds=(set_name == "test")
+            )
 
     if params["wandb"]["use"]:
         wandb.finish()
@@ -84,7 +90,7 @@ if __name__ == "__main__":
             f"Run {run_num}/{n_runs}\n" +
             "-" * 35 + "\n" + "-" * 35 + "\n"
         )
-        random_seed = 42 #run_num * 120
+        random_seed = run_num * 120
         set_global_seed(random_seed)
 
         output_folder = f"{dataset_name}_line"
@@ -194,7 +200,7 @@ if __name__ == "__main__":
                 "use_ddp": False,  # Use DistributedDataParallel
                 "use_apex": False,  # Enable mix-precision with apex package
                 "nb_gpu": torch.cuda.device_count(),
-                "batch_size": 128 if torch.cuda.get_device_name() in ('NVIDIA A100-SXM4-80GB', 'NVIDIA H100 80GB HBM3') else 16,  # mini-batch size per GPU
+                "batch_size": 1, #128 if torch.cuda.get_device_name() in ('NVIDIA A100-SXM4-80GB', 'NVIDIA H100 80GB HBM3') else 16,  # mini-batch size per GPU
                 "optimizer": {
                     "class": Adam,
                     "args": {
