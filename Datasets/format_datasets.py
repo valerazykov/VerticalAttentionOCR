@@ -567,8 +567,17 @@ def format_SK_line(
         line_imgs = []
         text_lines = []
 
-        txt_list_dir = sorted(os.listdir(txt_path))
-        img_list_dir = sorted(os.listdir(img_path))
+        def key_func(filename: str):
+            """Key-функция для сортировки директории страницы."""
+            pos_1 = filename.find("_")
+            pos_2 = filename.find(".")
+            try:
+                return int(filename[pos_1 + 1:pos_2])
+            except:
+                return -1
+
+        txt_list_dir = sorted(os.listdir(txt_path), key=key_func)
+        img_list_dir = sorted(os.listdir(img_path), key=key_func)
         for file_name in txt_list_dir:
             point_pos = file_name.find(".")
             file_format = file_name[point_pos + 1:]
