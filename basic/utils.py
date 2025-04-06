@@ -38,7 +38,7 @@ import re
 # Charset / labels conversion
 
 def LM_str_to_ind(labels, str):
-    return [labels.index(c) for c in str]
+    return [labels.index(c) for c in str if c in labels]
 
 
 def LM_ind_to_str(labels, ind, oov_symbol=None):
