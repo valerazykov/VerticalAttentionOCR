@@ -76,7 +76,10 @@ def train_and_test(rank, params):
 
 if __name__ == "__main__":
     dataset_name = "SK"  # ["RIMES", "IAM", "READ_2016", "SK"]
-    n_runs = 3  # сколько нейросейтей обучить
+    n_runs = 1  # сколько нейросейтей обучить
+    # константы для паддинга
+    MIN_HEIGHT = 0
+    MIN_WIDTH = 1420
 
     for run_num in range(1, n_runs + 1):
         logger.info(
@@ -91,7 +94,7 @@ if __name__ == "__main__":
         if n_runs > 1:
             output_folder = os.path.join(output_folder, "ensemble", str(run_num))
 
-        use_transfer_learning = False
+        use_transfer_learning = True
         transfer_learning_checkpoint_path = "outputs/IAM_line/checkpoints/best_1832.pt"
 
         params = {
@@ -111,16 +114,23 @@ if __name__ == "__main__":
                 "config": {
                     "width_divisor": 8,  # Image width will be divided by 8
                     "height_divisor": 32,  # Image height will be divided by 32
-                    "padding_value": 0,  # Image padding value
+                    "padding_value": 255,  #0  # Image padding value
                     "padding_token": 1000,  # Label padding value (None: default value is chosen)
                     "charset_mode": "CTC",  # add blank token
-                    "constraints": ["CTC_line"],  # Padding for CTC requirements if necessary
+                    "constraints": [  # Padding for CTC requirements if necessary
+                        "CTC_line",
+                        "padding",  # всегда добавляем паддинг
+                    ],
+                    "padding": {
+                        "min_height": MIN_HEIGHT,
+                        "min_width": MIN_WIDTH
+                    },
                     "preprocessings": [
-                        {
-                            "type": "dpi",  # modify image resolution
-                            "source": 200,  # from 300 dpi
-                            "target": 150,  # to 150 dpi
-                        },
+                        # {
+                        #     "type": "dpi",  # modify image resolution
+                        #     "source": 200,  # from 300 dpi
+                        #     "target": 150,  # to 150 dpi
+                        # },
                         {
                             "type": "to_RGB",
                             # if grayscale image, produce RGB one (3 channels with same value) otherwise do nothing
@@ -187,8 +197,8 @@ if __name__ == "__main__":
 
             "training_params": {
                 "output_folder": output_folder,  # folder names for logs and weigths
-                "max_nb_epochs": 3000, # 500000,  # max number of epochs for the training
-                "max_training_time":  3600*(24+23),  # max training time limit (in seconds)
+                "max_nb_epochs": 500000, # 500000,  # max number of epochs for the training
+                "max_training_time":  3600 * 24 * 3,  # max training time limit (in seconds)
                 "load_epoch": "best",  # ["best", "last"], to load weights from best epoch or last trained epoch
                 "interval_save_weights": None,  # None: keep best and last only
                 "use_ddp": False,  # Use DistributedDataParallel

@@ -532,6 +532,9 @@ def format_SK_line(
     """
     Format the Sukhovo-Kobylin dataset at line level
     """
+    assert len(train_names) == len(set(train_names))
+    assert len(val_names) == len(set(val_names))
+    assert len(test_names) == len(set(test_names))
     assert len(set(train_names).intersection(val_names)) == 0
     assert len(set(train_names).intersection(test_names)) == 0
     assert len(set(val_names).intersection(test_names)) == 0
@@ -584,18 +587,23 @@ def format_SK_line(
             file_name = file_name[:point_pos]
             if file_format != "txt":
                 continue
+            if "#" in file_name:
+                continue
             img_full_name = f"{file_name}bw.{img_format}" if use_bw else f"{file_name}.{img_format}"
             if img_full_name not in img_list_dir:
                 logger.warning(f"Image for %s.txt does not exists", file_name)
                 return None
             with open(txt_path / f"{file_name}.txt", encoding="utf-8-sig") as line_file:
                 text_line = line_file.readlines()[0]
-                text_line = text_line.replace("$", "").replace("\u200b", "").strip()
+                text_line = text_line.replace("\n", "").replace("$", "").replace("\u200b", "").strip()
                 if text_line == "":
                     logger.warning(f"Empty text in %s.txt", file_name)
-                    return None
+                    continue
                 if text_line == "Экспертная расшифровка отсутствует":
                     logger.warning(f"Экспертная расшифровка отсутствует в %s.txt", file_name)
+                    return None
+                if text_line == "Авторасшифровка отсутствует":
+                    logger.warning(f"Авторасшифровка отсутствует в %s.txt", file_name)
                     return None
             img = plt.imread(img_path / img_full_name)
             if img.shape[0] < 10 or img.shape[1] < 10:
@@ -644,7 +652,7 @@ def format_SK_line(
                 gt[set_name][new_img_name] = {"text": text, }
                 charset = charset.union(text)
                 i += 1
-        logger.info("Number of string with '#' in %s: %d",
+        logger.info("Number of string with '#' in %s: %d (не учитывем # в названии txt-файлов)",
                     set_name, num_strings_with_hashtag)
 
     with open(os.path.join(target_folder, "labels.pkl"), "wb") as f:
@@ -670,7 +678,7 @@ if __name__ == "__main__":
     # format_READ2016_line()
     # format_READ2016_paragraph()
 
-    train_names = ['11', '15', '17', '17об', '18', '18об', '19', '19об', '20', '20об', '21', '21об', '22', '22об', '23', '23об', '24', '24об', '25', '25об', '26', '26об', '27', '27об', '28', '28об', '29', '29об', '2об', '30', '30об', '31', '31об', '32', '32об', '33', '33об', '34', '34об', '35', '35об', '36', '38', '38об', '39', '39об', '40', '40об', '41', '41об', '42', '42об', '43', '43об', '44', '45об', '46', '46об', '47', '47об', '48', '48об', '49', '49об', '50', '50об', '51', '51об', '52', '52об', '53', '53об', '54', '54об', '55', '55об', '56', '56об', '57', '57об', '58', '88об']
+    train_names = ['4', '4об', '5', '6об', '7', '8', '8об', '9', '9об', '10','10об', '11', '14', '14об', '15', '15об', '16', '16об', '17', '17об', '18', '18об', '19', '19об', '20', '20об', '21', '21об', '22', '22об', '23', '23об', '24', '24об', '25', '25об', '26', '26об', '27', '27об', '28', '28об', '29', '29об', '2об', '30', '30об', '31', '31об', '32', '32об', '33', '33об', '34', '34об', '35', '35об', '36', '38', '38об', '39', '39об', '40', '40об', '41', '41об', '42', '42об', '43', '43об', '44', '45об', '46', '46об', '47', '47об', '48', '48об', '49', '49об', '50', '50об', '51', '51об', '52', '52об', '53', '53об', '54', '54об', '55', '55об', '56', '56об', '57', '57об', '58',  '67', '67об', '68', '68об', '69', '69об',  '70', '70об', '71', '71об', '72', '72об', '73', '73об', '74', '83об', '85', '88об', '89',]
     val_names = ['58об', '59', '59об', '60', '60об']
     test_names = ['61', '75', '75об', '7об', '95']
 
@@ -678,5 +686,6 @@ if __name__ == "__main__":
         train_names=train_names,
         val_names=val_names,
         test_names=test_names,
-        pages_folder="raw/SK/Pages"
+        pages_folder="raw/SK/Pages",
+        img_format="bmp"
     )
