@@ -78,8 +78,8 @@ if __name__ == "__main__":
     dataset_name = "SK"  # ["RIMES", "IAM", "READ_2016", "SK"]
     n_runs = 1  # сколько нейросейтей обучить
     # константы для паддинга
-    MIN_HEIGHT = 0
-    MIN_WIDTH = 1420
+    MIN_HEIGHT = 168  # q75
+    MIN_WIDTH = 2452  # q75
 
     for run_num in range(1, n_runs + 1):
         logger.info(
@@ -199,7 +199,7 @@ if __name__ == "__main__":
                 "output_folder": output_folder,  # folder names for logs and weigths
                 "max_nb_epochs": 500000, # 500000,  # max number of epochs for the training
                 "max_training_time":  3600 * 24 * 3,  # max training time limit (in seconds)
-                "load_epoch": "best",  # ["best", "last"], to load weights from best epoch or last trained epoch
+                "load_epoch": "last",  # ["best", "last"], to load weights from best epoch or last trained epoch
                 "interval_save_weights": 500,  # None: keep best and last only
                 "use_ddp": False,  # Use DistributedDataParallel
                 "use_apex": False,  # Enable mix-precision with apex package
