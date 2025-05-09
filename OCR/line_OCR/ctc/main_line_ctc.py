@@ -79,7 +79,7 @@ if __name__ == "__main__":
     n_runs = 1  # сколько нейросейтей обучить
     # константы для паддинга
     MIN_HEIGHT = 168  # q75
-    MIN_WIDTH = 2452  # q75
+    MIN_WIDTH = 2533  # q75
 
     for run_num in range(1, n_runs + 1):
         logger.info(
