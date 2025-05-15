@@ -527,7 +527,8 @@ def format_SK_line(
     target_folder: Union[Path, str] = "formatted/SK_lines",
     skip_lines_with_grid: bool = True,
     img_format: str = "jpg",
-    use_bw: bool = False
+    use_bw: bool = False,
+    limit_train_size: Union[None, int] = None,
 ):
     """
     Format the Sukhovo-Kobylin dataset at line level
@@ -604,7 +605,7 @@ def format_SK_line(
                 return None
             with open(txt_path / f"{file_name}.txt", encoding="utf-8-sig") as line_file:
                 text_line = line_file.readlines()[0]
-                text_line = text_line.replace("\n", "").replace("$", "").replace("\u200b", "").strip()
+                text_line = text_line.replace("\n", "").replace("$", "").replace("\u200b", "").replace("\ufeff", "").strip()
                 if text_line == "":
                     logger.warning(f"Empty text in %s.txt", file_name)
                     continue
@@ -644,6 +645,11 @@ def format_SK_line(
                 logger.warning("Error in name: %s, set: %s", name, set_name)
                 continue
             line_imgs, text_lines = r
+            if set_name == "train" and limit_train_size is not None and i + len(line_imgs) >= limit_train_size:
+                if i >= limit_train_size:
+                    break
+                line_imgs = line_imgs[:limit_train_size - i]
+                text_lines = text_lines[:limit_train_size - i]
             for line_img, text in zip(line_imgs, text_lines):
                 if skip_lines_with_grid and "#" in text:
                     logger.debug("Skipping %s because '#' in name, set: %s, text: %s",
@@ -704,5 +710,6 @@ if __name__ == "__main__":
         val_names=val_names,
         test_names=test_names,
         pages_folder="raw/SK/Pages_v7",
-        img_format="bmp"
+        img_format="bmp",
+        limit_train_size=500
     )

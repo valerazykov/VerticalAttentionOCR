@@ -200,7 +200,7 @@ if __name__ == "__main__":
                 "max_nb_epochs": 500000, # 500000,  # max number of epochs for the training
                 "max_training_time":  3600 * 24 * 3,  # max training time limit (in seconds)
                 "load_epoch": "last",  # ["best", "last"], to load weights from best epoch or last trained epoch
-                "interval_save_weights": 500,  # None: keep best and last only
+                "interval_save_weights": 250,  # None: keep best and last only
                 "use_ddp": False,  # Use DistributedDataParallel
                 "use_apex": False,  # Enable mix-precision with apex package
                 "nb_gpu": torch.cuda.device_count(),
