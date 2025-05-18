@@ -711,5 +711,5 @@ if __name__ == "__main__":
         test_names=test_names,
         pages_folder="raw/SK/Pages_v7",
         img_format="bmp",
-        limit_train_size=500
+        limit_train_size=1000
     )

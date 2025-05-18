@@ -95,7 +95,8 @@ if __name__ == "__main__":
             output_folder = os.path.join(output_folder, "ensemble", str(run_num))
 
         use_transfer_learning = True
-        transfer_learning_checkpoint_path = "outputs/IAM_line/checkpoints/best_1832.pt"
+        #transfer_learning_checkpoint_path = "outputs/IAM_line/checkpoints/best_1832.pt"
+        transfer_learning_checkpoint_path = "outputs/SK_line_v8_500/checkpoints/best_14144.pt"
 
         params = {
             "dataset_params": {
