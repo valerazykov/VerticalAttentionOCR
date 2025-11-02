@@ -76,27 +76,33 @@ def train_and_test(rank, params):
 
 if __name__ == "__main__":
     dataset_name = "SK"  # ["RIMES", "IAM", "READ_2016", "SK"]
-    n_runs = 1  # сколько нейросейтей обучить
+    runs = [1, 2, 3]  # сколько нейросейтей обучить
     # константы для паддинга
     MIN_HEIGHT = 168  # q75
     MIN_WIDTH = 2533  # q75
 
-    for run_num in range(1, n_runs + 1):
+    for run_num in runs:
         logger.info(
             "\n" + "-" * 35 + "\n" + "-" * 35 + "\n" +
-            f"Run {run_num}/{n_runs}\n" +
+            f"Run {run_num}/{str(runs)}\n" +
             "-" * 35 + "\n" + "-" * 35 + "\n"
         )
         random_seed = run_num * 120
         set_global_seed(random_seed)
 
         output_folder = f"{dataset_name}_line"
-        if n_runs > 1:
+        if len(runs) > 1:
             output_folder = os.path.join(output_folder, "ensemble", str(run_num))
 
         use_transfer_learning = True
         #transfer_learning_checkpoint_path = "outputs/IAM_line/checkpoints/best_1832.pt"
-        transfer_learning_checkpoint_path = "outputs/SK_line_v8_500/checkpoints/best_14144.pt"
+        #transfer_learning_checkpoint_path = "outputs/SK_line_v8_1000/checkpoints/best_2222.pt"
+        #transfer_learning_checkpoint_path = "outputs/SK_line_v8_1500/checkpoints/best_2040.pt"
+        transfer_learning_checkpoint_path = f"outputs/SK_line/ensemble/{run_num}/checkpoints/"
+        best_checkpoint = sorted(os.listdir(transfer_learning_checkpoint_path))[0]
+        transfer_learning_checkpoint_path = os.path.join(transfer_learning_checkpoint_path, best_checkpoint)
+        assert "best" in best_checkpoint
+        print("Using checkpoint:", best_checkpoint)
 
         params = {
             "dataset_params": {
@@ -198,8 +204,8 @@ if __name__ == "__main__":
 
             "training_params": {
                 "output_folder": output_folder,  # folder names for logs and weigths
-                "max_nb_epochs": 500000, # 500000,  # max number of epochs for the training
-                "max_training_time":  3600 * 24 * 3,  # max training time limit (in seconds)
+                "max_nb_epochs": 10_000, # 500000,  # max number of epochs for the training
+                "max_training_time":  3600 * 120,  # max training time limit (in seconds)
                 "load_epoch": "last",  # ["best", "last"], to load weights from best epoch or last trained epoch
                 "interval_save_weights": 250,  # None: keep best and last only
                 "use_ddp": False,  # Use DistributedDataParallel
