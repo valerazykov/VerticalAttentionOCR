@@ -529,6 +529,11 @@ def format_SK_line(
     img_format: str = "jpg",
     use_bw: bool = False,
     limit_train_size: Union[None, int] = None,
+    n_first_lines: Union[None, int] = None,
+    n_lines_uncertainty: Union[None, int] = None,
+    using_max_uncertainty: bool = True,
+    uncertainty_file_path: Union[None, str] = "./train_uncertainty_500.npy",
+    print_using_train_idx: bool = True,
 ):
     """
     Format the Sukhovo-Kobylin dataset at line level
@@ -539,6 +544,10 @@ def format_SK_line(
     assert len(set(train_names).intersection(val_names)) == 0
     assert len(set(train_names).intersection(test_names)) == 0
     assert len(set(val_names).intersection(test_names)) == 0
+
+    using_uncertainty = (n_first_lines is not None and n_lines_uncertainty is not None and uncertainty_file_path is not None)
+    if limit_train_size is not None and using_uncertainty:
+        raise ValueError("You can't use uncertainty and limit_train_size at the same time")
 
     pages_folder = Path(pages_folder)
     target_folder = Path(target_folder)
@@ -630,6 +639,13 @@ def format_SK_line(
         "test": dict()
     }
     charset = set()
+    
+    if using_uncertainty:
+        train_uncertainty_scores = np.load(uncertainty_file_path)[n_first_lines:]
+        if using_max_uncertainty:
+            train_uncertainty_scores *= -1
+        top_uncertainty_idx = np.argsort(train_uncertainty_scores)[:n_lines_uncertainty] + n_first_lines
+        using_train_idx = []
 
     for page_names, set_name in zip(
         [train_names, val_names, test_names],
@@ -656,16 +672,21 @@ def format_SK_line(
                                  name, set_name, text)
                     num_strings_with_hashtag += 1
                     continue
+                if set_name == "train" and using_uncertainty and i not in top_uncertainty_idx and i >= n_first_lines:
+                    i += 1
+                    continue
                 new_img_name = f"{set_name}_{i}.jpg"
                 new_img_path = os.path.join(img_fold_path, new_img_name)
                 try:
                     Image.fromarray(line_img).save(new_img_path)
                 except:
-                    logger.warning("Error while saving %s, set: %s, text: %s",
+                    logger.error("Error while saving %s, set: %s, text: %s",
                                    name, set_name, text)
                     continue
                 gt[set_name][new_img_name] = {"text": text, }
                 charset = charset.union(text)
+                if set_name == "train" and using_uncertainty:
+                    using_train_idx.append(i)
                 i += 1
         logger.info("Number of string with '#' in %s: %d (не учитывем # в названии txt-файлов)",
                     set_name, num_strings_with_hashtag)
@@ -679,6 +700,8 @@ def format_SK_line(
     logger.info("Train names: %s", str(train_names))
     logger.info("Val names: %s", str(val_names))
     logger.info("Test names: %s", str(test_names))
+    if print_using_train_idx:
+        logger.info("Using train idx: %s", str(using_train_idx))
     
 
 
@@ -711,5 +734,9 @@ if __name__ == "__main__":
         test_names=test_names,
         pages_folder="raw/SK/Pages_v7",
         img_format="bmp",
-        limit_train_size=1000
+        limit_train_size=None,
+        n_first_lines=500,
+        n_lines_uncertainty=500,
+        using_max_uncertainty=True,
+        uncertainty_file_path="./train_uncertainty_500.npy"
     )
