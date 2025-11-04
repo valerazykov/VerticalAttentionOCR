@@ -76,7 +76,7 @@ def train_and_test(rank, params):
 
 if __name__ == "__main__":
     dataset_name = "SK"  # ["RIMES", "IAM", "READ_2016", "SK"]
-    runs = [1, 2, 3]  # сколько нейросейтей обучить
+    runs = [1]  # сколько нейросейтей обучить
     # константы для паддинга
     MIN_HEIGHT = 168  # q75
     MIN_WIDTH = 2533  # q75
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         #transfer_learning_checkpoint_path = "outputs/IAM_line/checkpoints/best_1832.pt"
         #transfer_learning_checkpoint_path = "outputs/SK_line_v8_1000/checkpoints/best_2222.pt"
         #transfer_learning_checkpoint_path = "outputs/SK_line_v8_1500/checkpoints/best_2040.pt"
-        transfer_learning_checkpoint_path = f"outputs/SK_line/ensemble/{run_num}/checkpoints/"
+        transfer_learning_checkpoint_path = f"outputs/SK_line_v9_ens_500/ensemble/{run_num}/checkpoints/"
         best_checkpoint = sorted(os.listdir(transfer_learning_checkpoint_path))[0]
         transfer_learning_checkpoint_path = os.path.join(transfer_learning_checkpoint_path, best_checkpoint)
         assert "best" in best_checkpoint
@@ -204,10 +204,10 @@ if __name__ == "__main__":
 
             "training_params": {
                 "output_folder": output_folder,  # folder names for logs and weigths
-                "max_nb_epochs": 10_000, # 500000,  # max number of epochs for the training
+                "max_nb_epochs": 2_500, # 500000,  # max number of epochs for the training
                 "max_training_time":  3600 * 120,  # max training time limit (in seconds)
                 "load_epoch": "last",  # ["best", "last"], to load weights from best epoch or last trained epoch
-                "interval_save_weights": 250,  # None: keep best and last only
+                "interval_save_weights": 500,  # None: keep best and last only
                 "use_ddp": False,  # Use DistributedDataParallel
                 "use_apex": False,  # Enable mix-precision with apex package
                 "nb_gpu": torch.cuda.device_count(),
@@ -220,7 +220,7 @@ if __name__ == "__main__":
                     }
                 },
                 "eval_on_valid": True,  # Whether to eval and logs metrics on validation set during training or not
-                "eval_on_valid_interval": 2,  # Interval (in epochs) to evaluate during training
+                "eval_on_valid_interval": 4,  # Interval (in epochs) to evaluate during training
                 "focus_metric": "cer",   # Metrics to focus on to determine best epoch
                 "expected_metric_value": "low",  # ["high", "low"] What is best for the focus metric value
                 "set_name_focus_metric": "{}-valid".format(dataset_name),
