@@ -713,8 +713,8 @@ if __name__ == "__main__":
     val_names = ['58об', '59', '59об', '60', '60об']
     test_names = ['61', '75', '75об', '7об', '95']
 
-    next_500_lines_idx_path = "./max_500_uncertainty_idx.npy"
-    using_train_idx = list(range(500)) + list(np.load(next_500_lines_idx_path))
+    # next_500_lines_idx_path = "./max_500_uncertainty_idx.npy"
+    # using_train_idx = list(range(500)) + list(np.load(next_500_lines_idx_path))
 
 
     format_SK_line(
@@ -724,5 +724,5 @@ if __name__ == "__main__":
         pages_folder="raw/SK/Pages_v7",
         img_format="bmp",
         limit_train_size=None,
-        using_train_idx=using_train_idx,
+        # using_train_idx=using_train_idx,
     )
