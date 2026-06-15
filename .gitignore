@@ -25,7 +25,8 @@ log*.txt
 dist/
 build/
 server/upload/**
-Datasets/*
+Datasets/raw/*
+Datasets/formatted/*
 **/dataset_features
 **/OCR/OutputDropout/**
 *.0
