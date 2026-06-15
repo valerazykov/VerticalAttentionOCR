@@ -1,0 +1,27 @@
+# Joint inference environment for VerticalAttentionOCR VAN and Kansallisarkisto TrOCR.
+# The fixed torch/torchvision pair avoids pulling a CUDA 13 build on the current cluster driver.
+torch==2.5.1
+torchvision==0.20.1
+
+numpy<2
+scipy
+pandas>=2.0
+matplotlib>=3.8
+seaborn>=0.13
+opencv-python-headless
+scikit-image
+tqdm>=4.66
+tensorboard>=2.15
+wandb
+pillow>=10
+editdistance>=0.8
+ipython>=8
+ipykernel
+
+# cyrillic-large-handwritten stores a TokenizersBackend processor requiring Transformers v5.
+transformers==5.0.0rc1
+accelerate>=1.10,<2
+huggingface-hub>=1.2.1,<2
+safetensors>=0.4
+sentencepiece>=0.2
+protobuf>=4.25

@@ -29,3 +29,5 @@ Datasets/*
 **/dataset_features
 **/OCR/OutputDropout/**
 *.0
+notebooks/inference_new_data_try.ipynb
+.DS_Store

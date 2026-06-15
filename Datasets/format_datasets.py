@@ -530,6 +530,8 @@ def format_SK_line(
     use_bw: bool = False,
     limit_train_size: Union[None, int] = None,
     using_train_idx: Union[None, list] = None,
+    add_txt_files: bool = False,
+    save_charset_separately: bool = False,
 ):
     """
     Format the Sukhovo-Kobylin dataset at line level
@@ -672,6 +674,8 @@ def format_SK_line(
                     logger.error("Error while saving %s, set: %s, text: %s",
                                    name, set_name, text)
                     continue
+                if add_txt_files:
+                    Path(new_img_path).with_suffix(".txt").write_text(text, encoding="utf-8")
                 gt[set_name][new_img_name] = {"text": text, }
                 charset = charset.union(text)
                 i += 1
@@ -683,6 +687,9 @@ def format_SK_line(
             "ground_truth": gt,
             "charset": sorted(list(charset)),
         }, f)
+    if save_charset_separately:
+        with open(os.path.join(target_folder, "charset.pkl"), "wb") as f:
+            pickle.dump(charset, f)
 
     logger.info("Train names: %s", str(train_names))
     logger.info("Val names: %s", str(val_names))
@@ -725,4 +732,6 @@ if __name__ == "__main__":
         img_format="bmp",
         limit_train_size=None,
         # using_train_idx=using_train_idx,
+        add_txt_files=True,
+        save_charset_separately=True,
     )
